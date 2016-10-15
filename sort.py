@@ -85,16 +85,22 @@ def fill(file_name, samplefile_line_count, column_number):
 
 class ProfileIt:
 
+    def __init__(self, flag=True):
+        self.flag = flag
+        self.p = None
+
     def __enter__(self):
-        self.p = cProfile.Profile()
-        self.p.enable()
+        if self.flag:
+            self.p = cProfile.Profile()
+            self.p.enable()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-         self.p.disable()
-         stream = io.StringIO()
-         stats = pstats.Stats(self.p, stream=stream).sort_stats('cumulative')
-         stats.print_stats()
-         logging.debug('Измерение вызовов\n' + stream.getvalue())
+        if self.flag:
+            self.p.disable()
+            stream = io.StringIO()
+            stats = pstats.Stats(self.p, stream=stream).sort_stats('cumulative')
+            stats.print_stats()
+            logging.debug('Измерение вызовов\n' + stream.getvalue())
 
 
 def main(ns):
@@ -108,10 +114,7 @@ def main(ns):
         merge(ns.file, ns.column_separator, ns.column_number)
 
     try:
-        if ns.profile:
-            with ProfileIt():
-                do_logic()
-        else:
+        with ProfileIt(ns.profile):
             do_logic()
     except UnicodeDecodeError:
         logging.exception('Не могу прочитать файл')
